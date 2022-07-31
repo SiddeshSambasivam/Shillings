@@ -1,0 +1,48 @@
+syntax="proto3";
+
+package proto;
+option go_package="./";
+
+message User {
+    int32 id = 1;
+    string first_name = 2;
+    string middle_name = 3;
+    string last_name = 4;
+    string email = 5;
+    string phone = 6;
+    float balance = 7;
+    int64 created_at = 8;
+    int64 updated_at = 9;
+}
+
+message UserCredentials {
+    string UserName = 1;
+    string Password = 2;
+}
+
+message Credentials {
+    int64 Id = 1;
+    int64 UserId = 2;
+    string Password = 3;
+    string Salt = 4;
+    int64 UpdatedAt = 5;
+    int64 LastLogin = 6;
+}
+
+message Transaction {    
+    int64 Id = 1;
+    int64 SenderId = 2;
+    int64 ReceiverId = 3;
+    float Amount = 4;
+    int64 CreatedAt = 5;
+}
+
+message Auth {
+    string Token = 1;
+    int64 ExpirationTime = 2;
+}
+
+message Request {
+    int32 command = 1;
+    Auth auth = 2;
+}
