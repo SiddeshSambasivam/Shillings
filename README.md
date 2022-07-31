@@ -29,9 +29,9 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 #### **Tasks**
 
--   [] Setup SQL database locally (docker)
--   [] Setup redis locally (docker)
--   [] Populate the database with some data
+-   [ ] Setup SQL database locally (docker)
+-   [ ] Setup redis locally (docker)
+-   [ ] Populate the database with some data
 
 ### 2. Application Layer
 
@@ -46,8 +46,8 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 #### **Tasks**
 
--   [] write the API handlers
--   [] Write the utility functions to handle protobuf, read and write requests with platform layer
+-   [ ] write the API handlers
+-   [ ] Write the utility functions to handle protobuf, read and write requests with platform layer
 
 ### 3. Platform Layer
 
@@ -63,17 +63,17 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 #### **Tasks**
 
--   [] Write the required protobuf messages for the communication protocol
-    -   [] Compile the protobuf messages with `protoc`
-    -   [] Copy the generated files to the `/proto` directory
--   [] Write the handlers for each command
--   [] Setup database handlers
-    -   [] Write connection pool for the database
--   [] Setup redis handlers
-    -   [] Write connection pool for the redis database
--   [] Add health check for platform server.
+-   [ ] Write the required protobuf messages for the communication protocol
+    -   [ ] Compile the protobuf messages with `protoc`
+    -   [ ] Copy the generated files to the `/proto` directory
+-   [ ] Write the handlers for each command
+-   [ ] Setup database handlers
+    -   [ ] Write connection pool for the database
+-   [ ] Setup redis handlers
+    -   [ ] Write connection pool for the redis database
+-   [ ] Add health check for platform server.
 
 ## Performance requirements:
 
--   [] Backend service should be able to handle a minimum of 10K qps
+-   [ ] Backend service should be able to handle a minimum of 10K qps
     -   Load test the backend service with `wrk`
