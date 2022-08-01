@@ -9,7 +9,7 @@ _A backend system for a payment service that allows you to send and receive mone
 
 ### Project Scope
 
-A set of web APIs that provide **payment services** with authentication. A _custom communication protocol (shillings)_ is used by the application and platform layer. The `platform layer` handles all the business logic and the `application layer` handles the client calls. _Shillings_ is a custom protocol on top of TCP written in `Go` to handle platform level services such as authentication, payment, database access, and so on.
+A set of web APIs that provide **payment services** with authentication. A _custom communication protocol (shillings)_ is used by the web and platform layer. The `platform layer` handles all the business logic and the `web layer` handles the client calls. _Shillings_ is a custom protocol on top of TCP written in `Go` to handle platform level services such as authentication, payment, database access, and so on.
 
 ## Technical Design Decisions
 
@@ -33,7 +33,7 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 -   [ ] Setup redis locally (docker)
 -   [ ] Populate the database with some data
 
-### 2. Application Layer
+### 2. Web Layer
 
 | API                | Method | Description                                |
 | ------------------ | ------ | ------------------------------------------ |
