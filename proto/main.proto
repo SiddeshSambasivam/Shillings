@@ -46,6 +46,15 @@ message Auth {
 
 // Protocol specific entities.
 
+enum Command {
+    LGN = 0; // Login.
+    SGN = 1; // Signup.
+    USR = 2; // User.
+    PAY = 3; // Pay.
+    TPU = 4; // Topup.
+    TXQ = 5; // Transaction query
+}
+
 enum Code {
     OK = 0;
     BAD_REQUEST = 1;
@@ -64,8 +73,7 @@ message Status {
 
 // To send corresponding command for a service
 message RequestCommand {
-    int32 command = 1;
-    Auth auth = 2;
+    Command command = 1;
 }
 
 message ResponseCommand {

@@ -251,15 +251,16 @@ Response:
 | ------- | ----- | ------------------------------------------ |
 | `LGN`   | 0     | Authenticates the user and returns a token |
 | `SGN`   | 1     | Register a new user                        |
-| `ACCT`  | 2     | Gets a user profile                        |
-| `PY`    | 3     | Makes a payment to another user            |
-| `TPUP`  | 4     | Top up a user's balance                    |
-| `TQRY`  | 5     | Get all the transactions made by a user    |
+| `USR`   | 2     | Gets a user profile                        |
+| `PAY`   | 3     | Makes a payment to another user            |
+| `TPU`   | 4     | Top up a user's balance                    |
+| `TXQ`   | 5     | Get all the transactions made by a user    |
 
 #### **Tasks**
 
 -   [x] Write the required protobuf messages for the communication protocol
     -   [x] Compile the protobuf messages with `protoc`
+-   [x] Write the communication protocol
 -   [ ] Write the handlers for each command
 -   [ ] Setup database handlers
     -   [ ] Write connection pool for the database
