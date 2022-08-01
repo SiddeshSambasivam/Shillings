@@ -35,14 +35,210 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 ### 2. Application Layer
 
-| API                        | Method | Description                                |
-| -------------------------- | ------ | ------------------------------------------ |
-| `/v1/login`                | `POST` | Authenticates the user and returns a token |
-| `/v1/signup`               | `PUT`  | Register a new user                        |
-| `/v1/pay`                  | `POST` | Makes a payment to another user            |
-| `/v1/auth/check_user`      | `POST` | Checks if a user exists                    |
-| `/v1/account`              | `GET`  | Gets a user profile                        |
-| `/v1/validate_transaction` | `POST` | Checks if a transaction is valid           |
+| API                | Method | Description                                |
+| ------------------ | ------ | ------------------------------------------ |
+| `/v1/login`        | `POST` | Authenticates the user and returns a token |
+| `/v1/signup`       | `POST` | Register a new user                        |
+| `/v1/account`      | `GET`  | Gets a user profile                        |
+| `/v1/pay`          | `POST` | Makes a payment to another user            |
+| `/v1/topup`        | `PUT`  | Tops up a user's account balance           |
+| `/v1/transactions` | `GET`  | Get all the transactions made by a user    |
+
+#### **API Endpoints**
+
+<details>
+<summary>POST /v1/login</summary>
+
+Request body:
+
+```json
+{
+    "email": " <email>",
+    "password": " <password>"
+}
+```
+
+Response:
+
+```json
+{
+    "auth": {
+        "token": " <token>",
+        "expiration_time": " <expiration_time>"
+    },
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>POST /v1/signup</summary>
+
+Request body:
+
+```json
+{
+    "user": {
+        "first_name": " <first_name>",
+        "middle_name": " <middle_name>",
+        "last_name": " <last_name>",
+        "email": " <email>",
+        "phone": " <phone>"
+    },
+    "credentials": {
+        "password": " <password>"
+    }
+}
+```
+
+Response:
+
+```json
+{
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>GET /v1/account</summary>
+
+Request body:
+
+```json
+{
+    "user_id": " <user_id>",
+    "auth": {
+        "token": " <token>",
+        "expiration_time": " <expiration_time>"
+    }
+}
+```
+
+Response:
+
+```json
+{
+    "user": {
+        "id": " <id>",
+        "first_name": " <first_name>",
+        "middle_name": " <middle_name>",
+        "last_name": " <last_name>",
+        "email": " <email>",
+        "phone": " <phone>",
+        "balance": " <balance>"
+    },
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>POST /v1/pay</summary>
+
+Request body:
+
+```json
+{
+    "receiver_email": " <receiver_id>",
+    "amount": " <amount>",
+    "auth": {
+        "token": " <token>",
+        "expiration_time": " <expiration_time>"
+    }
+}
+```
+
+Response:
+
+```json
+{
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>PUT /v1/topup</summary>
+
+Request body:
+
+```json
+{
+    "user_id": " <user_id>",
+    "amount": " <amount>",
+    "auth": {
+        "token": " <token>",
+        "expiration_time": " <expiration_time>"
+    }
+}
+```
+
+Response:
+
+```json
+{
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>GET /v1/transactions</summary>
+
+Request body:
+
+```json
+{
+    "user_id": " <user_id>",
+    "auth": {
+        "token": " <token>",
+        "expiration_time": " <expiration_time>"
+    }
+}
+```
+
+Response:
+
+```json
+{
+    "transactions": [
+        {
+            "id": " <id>",
+            "sender_name": " <sender_name>",
+            "receiver_name": " <receiver_name>",
+            "amount": " <amount>",
+            "created_at": " <created_at>"
+        }
+    ],
+    "status": {
+        "code": " <code>",
+        "message": " <message>"
+    }
+}
+```
+
+</details>
 
 #### **Tasks**
 
@@ -51,21 +247,19 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 ### 3. Platform Layer
 
-| Command  | Value | Function                                   |
-| -------- | ----- | ------------------------------------------ |
-| `LGN`    | 0     | Authenticates the user and returns a token |
-| `SGN`    | 1     | Register a new user                        |
-| `PY`     | 2     | Makes a payment to another user            |
-| `CHKUSR` | 3     | Checks if a user exists                    |
-| `ACCT`   | 4     | Gets a user profile                        |
-| `VLDT`   | 5     | Checks if a transaction is valid           |
-| `PING`   | 6     | Pings the service                          |
+| Command | Value | Function                                   |
+| ------- | ----- | ------------------------------------------ |
+| `LGN`   | 0     | Authenticates the user and returns a token |
+| `SGN`   | 1     | Register a new user                        |
+| `ACCT`  | 2     | Gets a user profile                        |
+| `PY`    | 3     | Makes a payment to another user            |
+| `TPUP`  | 4     | Top up a user's balance                    |
+| `TQRY`  | 5     | Get all the transactions made by a user    |
 
 #### **Tasks**
 
--   [ ] Write the required protobuf messages for the communication protocol
-    -   [ ] Compile the protobuf messages with `protoc`
-    -   [ ] Copy the generated files to the `/proto` directory
+-   [x] Write the required protobuf messages for the communication protocol
+    -   [x] Compile the protobuf messages with `protoc`
 -   [ ] Write the handlers for each command
 -   [ ] Setup database handlers
     -   [ ] Write connection pool for the database
