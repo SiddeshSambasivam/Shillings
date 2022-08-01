@@ -1,58 +1,53 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
+	"net"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
+	pkg "github.com/SiddeshSambasivam/shillings/pkg"
+	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
 )
 
-var PORT = "8080"
+var PORT = ":8000"
 var ADDR = "127.0.0.1"
 
-func getEnvVar(key string) string {
-	err := godotenv.Load(".env")
+func loginHandler(w http.ResponseWriter, r *http.Request) {
 
-	if err != nil {
-		log.Fatalf("Error loading .env file")
+	switch r.Method {
+	case "POST":
+
+		client, err := net.Dial("tcp", "127.0.0.1:8080")
+		if err != nil {
+			log.Println("Error dialing:", err)
+			return
+		}
+
+		defer client.Close()
+
+		cmd := &pb.RequestCommand{Command: pb.Command_LGN}
+		pkg.SendCmdRequest(client, cmd)
+
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
-
-	return os.Getenv(key)
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	resp := make(map[string]string)
-
-	resp["message"] = ADDR
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
-	}
-
-	w.Write(jsonResp)
-
 }
 
 func main() {
 
-	envPort := getEnvVar("PORT")
-	log.Println("Loaded env var: ", envPort)
+	envPort := ":" + pkg.GetEnvVar("WEB_PORT")
 
 	if envPort != "" {
 		PORT = envPort
+		log.Println("Loaded env var:", envPort)
 	}
 
-	ADDR = ADDR + ":" + PORT
+	ADDR = ADDR + PORT
 
-	log.Println("Starting server on " + ADDR)
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/login", loginHandler)
+
+	log.Println("Serving web server @ : " + ADDR)
 	err := http.ListenAndServe(ADDR, nil)
+	pkg.HandleErrorWithExt(err)
 
-	if err != nil {
-		log.Fatal(err)
-	}
 }
