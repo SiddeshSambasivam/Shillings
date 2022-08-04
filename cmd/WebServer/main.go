@@ -10,14 +10,14 @@ import (
 )
 
 var PORT = ":8000"
-var ADDR = "127.0.0.1"
+var ADDR = "0.0.0.0"
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
 
-		client, err := net.Dial("tcp", "127.0.0.1:8080")
+		client, err := net.Dial("tcp", "app:8020")
 		if err != nil {
 			log.Println("Error dialing:", err)
 			return

@@ -1,0 +1,34 @@
+version: '3.6'
+services:
+  mysql:
+    build: 
+      dockerfile: ./docker/db/Dockerfile
+      context: .
+    ports:
+      - '33061:3306'
+    volumes:      
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  
+  web:
+    stdin_open: true    
+    build: 
+      dockerfile: ./docker/web/Dockerfile
+      context: .    
+    environment:
+      - WEB_PORT=8010
+    ports:
+      - '8010:8010'
+      - '8000:8000'
+    depends_on:
+      - app
+      
+  app:
+    build: 
+      dockerfile: ./docker/app/Dockerfile
+      context: .
+    environment:
+      - APP_PORT=8020
+    ports:
+      - '8020:8020'
+    depends_on:
+      - mysql
