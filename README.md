@@ -11,6 +11,28 @@ _A backend system for a payment service that allows you to send and receive mone
 
 A set of web APIs that provide **payment services** with authentication. A _custom communication protocol (shillings)_ is used by the web and platform layer. The `platform layer` (application layer) handles all the business logic and the `web layer` handles the client calls. _Shillings_ is a custom protocol on top of TCP written in `Go` to handle platform level services such as authentication, payment, database access, and so on. The web layer is seperated from the platform layer to allow easy scaling and maintenance.
 
+## Installation
+
+**Prerequisites:** Docker
+
+1. Build the required images
+
+    ```bash
+    make build
+    ```
+
+2. Start the services
+    ```bash
+    make start
+    ```
+
+## Interesting Situations
+
+-   `Application server cannot connect to the MySQL database`
+    -   It was caused by the difference in startup time between the application server and the database server.
+    -   By the time database starts, the application server is already running and has pinged the database server.
+    -   **Solution:** To solve it I used `wait-for` package to listen to SQL server until it is ready and then start the application server.
+
 ## Technical Design Decisions
 
 ### 1. Database
@@ -29,9 +51,9 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 
 #### **Tasks**
 
--   [ ] Setup SQL database locally (docker)
+-   [x] Setup SQL database locally (docker)
 -   [ ] Setup redis locally (docker)
--   [ ] Populate the database with some data
+-   [x] Populate the database with some data
 
 ### 2. Web Layer
 
@@ -262,7 +284,7 @@ Response:
     -   [x] Compile the protobuf messages with `protoc`
 -   [x] Write the communication protocol
 -   [ ] Write the handlers for each command
--   [ ] Setup database handlers
+-   [x] Setup database handlers
     -   [ ] Write connection pool for the database
 -   [ ] Setup redis handlers
     -   [ ] Write connection pool for the redis database
