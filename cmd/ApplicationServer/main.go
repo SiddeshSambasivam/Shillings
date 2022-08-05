@@ -1,74 +1,21 @@
 package main
 
 import (
-	"encoding/binary"
-	"io"
+	"database/sql"
 	"log"
 	"net"
-	"time"
 
-	pkg "github.com/SiddeshSambasivam/shillings/pkg"
+	"github.com/SiddeshSambasivam/shillings/pkg/db"
+	envtools "github.com/SiddeshSambasivam/shillings/pkg/env"
+	errors "github.com/SiddeshSambasivam/shillings/pkg/errors"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
-	"google.golang.org/protobuf/proto"
 )
 
-var PORT = ":8080"
-var ADDR = "127.0.0.1"
-
-func readCommand(conn net.Conn, requestPb *pb.RequestCommand) error {
-
-	var headerByteSize int = 4
-	headerBuffer := make([]byte, headerByteSize)
-
-	_, readErr := conn.Read(headerBuffer)
-
-	if readErr != nil && readErr != io.EOF {
-		sendCmdErrResponse(
-			conn,
-			pb.Code_DATA_LOSS,
-			"Error reading header: "+readErr.Error(),
-		)
-
-		return readErr
-	}
-
-	dataByteSize := int(binary.BigEndian.Uint32(headerBuffer))
-
-	dataBuffer := make([]byte, dataByteSize)
-	_, dataReadError := conn.Read(dataBuffer)
-
-	if dataReadError != nil && dataReadError != io.EOF {
-		sendCmdErrResponse(
-			conn,
-			pb.Code_DATA_LOSS,
-			"Error reading data: "+dataReadError.Error(),
-		)
-		return dataReadError
-	}
-
-	if len(dataBuffer) != dataByteSize {
-		sendCmdErrResponse(
-			conn,
-			pb.Code_DATA_LOSS,
-			"Error missing data: "+dataReadError.Error(),
-		)
-		return dataReadError
-	}
-
-	err := proto.Unmarshal(dataBuffer, requestPb)
-	if err != nil {
-		sendCmdErrResponse(
-			conn,
-			pb.Code_DATA_LOSS,
-			"Error unmarshalling: "+err.Error(),
-		)
-		return err
-	}
-
-	return nil
+type DataEnv struct {
+	DB *sql.DB
 }
 
-func handleConnection(conn net.Conn) {
+func (env *DataEnv) handleConnection(conn net.Conn) {
 
 	defer conn.Close()
 
@@ -76,7 +23,11 @@ func handleConnection(conn net.Conn) {
 	err := readCommand(conn, requestPb)
 	if err != nil {
 		log.Println("Error reading command: ", err)
-		return
+		sendCmdErrResponse(
+			conn,
+			pb.Code_BAD_REQUEST,
+			"Error reading command: "+err.Error(),
+		)
 	}
 
 	cmd := requestPb.GetCommand()
@@ -97,43 +48,30 @@ func handleConnection(conn net.Conn) {
 	default:
 		log.Println("Unknown command received")
 	}
-	// If the command is not supported, return an error
-	// Create request and response for the command
-
-	// 1. Read the payload
-	// 2. redirect to the specific handler
-
 }
 
 func main() {
 
-	envPort := ":" + pkg.GetEnvVar("APP_PORT")
-	log.Println("Loaded env var: ", envPort)
+	var PORT = ":8080"
+	var ADDR = "127.0.0.1"
 
+	envPort := ":" + envtools.GetEnvVar("APP_PORT")
+	log.Println("Loaded env var: ", envPort)
 	if envPort != "" {
 		PORT = envPort
 	}
 
 	ADDR = ADDR + PORT
 	tcpAddr, err := net.ResolveTCPAddr("tcp", PORT)
-	pkg.HandleErrorWithExt(err)
+	errors.HandleErrorWithExt(err)
 
 	log.Println("Serving application server @ : " + ADDR)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
-	pkg.HandleErrorWithExt(err)
-
-	Db := pkg.DbConn()
-	Db.SetConnMaxLifetime(3 * time.Hour)
-	Db.SetMaxOpenConns(3000)
-	Db.SetMaxIdleConns(3000)
+	errors.HandleErrorWithExt(err)
 	defer listener.Close()
 
-	row, err := Db.Query("SELECT * FROM users")
-	pkg.HandleErrorWithExt(err)
-	// iterate over the rows
-	for row.Next() {
-		log.Println("Row: ", row)
-	}
+	db := db.InitDB()
+	env := &DataEnv{DB: db}
 
 	for {
 		conn, err := listener.Accept()
@@ -144,7 +82,7 @@ func main() {
 		}
 
 		log.Println("Accepted connection: ", conn.RemoteAddr())
-		go handleConnection(conn)
+		go env.handleConnection(conn)
 
 	}
 

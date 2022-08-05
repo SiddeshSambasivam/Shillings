@@ -2,40 +2,17 @@ package main
 
 import (
 	"log"
-	"net"
 	"net/http"
 
-	pkg "github.com/SiddeshSambasivam/shillings/pkg"
-	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
+	envtools "github.com/SiddeshSambasivam/shillings/pkg/env"
+	errors "github.com/SiddeshSambasivam/shillings/pkg/errors"
 )
-
-var PORT = ":8000"
-var ADDR = "0.0.0.0"
-
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case "POST":
-
-		client, err := net.Dial("tcp", "app:8020")
-		if err != nil {
-			log.Println("Error dialing:", err)
-			return
-		}
-
-		defer client.Close()
-
-		cmd := &pb.RequestCommand{Command: pb.Command_LGN}
-		pkg.SendCmdRequest(client, cmd)
-
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
 
 func main() {
 
-	envPort := ":" + pkg.GetEnvVar("WEB_PORT")
+	var PORT = ":8000"
+	var ADDR = "0.0.0.0"
+	envPort := ":" + envtools.GetEnvVar("WEB_PORT")
 
 	if envPort != "" {
 		PORT = envPort
@@ -48,6 +25,6 @@ func main() {
 
 	log.Println("Serving web server @ : " + ADDR)
 	err := http.ListenAndServe(ADDR, nil)
-	pkg.HandleErrorWithExt(err)
+	errors.HandleErrorWithExt(err)
 
 }

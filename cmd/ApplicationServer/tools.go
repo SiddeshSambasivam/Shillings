@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 
-	pkg "github.com/SiddeshSambasivam/shillings/pkg"
+	protocols "github.com/SiddeshSambasivam/shillings/pkg/protocols"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
 )
 
@@ -15,5 +15,5 @@ func sendCmdErrResponse(conn net.Conn, status_code pb.Code, err_message string) 
 		},
 	}
 
-	pkg.SendCmdResponse(conn, response)
+	protocols.SendProtocolData(conn, response)
 }
