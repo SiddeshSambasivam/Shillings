@@ -17,3 +17,14 @@ func sendCmdErrResponse(conn net.Conn, status_code pb.Code, err_message string) 
 
 	protocols.SendProtocolData(conn, response)
 }
+
+func SendSignupErrResponse(conn net.Conn, status_code pb.Code, err_message string) {
+	response := &pb.ResponseSignup{
+		Status: &pb.Status{
+			Code:    status_code,
+			Message: err_message,
+		},
+	}
+
+	protocols.SendProtocolData(conn, response)
+}

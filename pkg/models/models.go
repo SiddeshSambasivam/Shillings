@@ -11,3 +11,8 @@ type User struct {
 	Created_at  string  `json:"created_at"`
 	Updated_at  string  `json:"updated_at"`
 }
+
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}

@@ -35,8 +35,10 @@ func (env *DataEnv) handleConnection(conn net.Conn) {
 	switch cmd {
 	case pb.Command_LGN:
 		log.Println("Login command received")
+
 	case pb.Command_SGN:
-		log.Println("Signup command received")
+		env.commandHandlerSGN(conn)
+
 	case pb.Command_USR:
 		log.Println("User command received")
 	case pb.Command_PAY:

@@ -21,7 +21,8 @@ func main() {
 
 	ADDR = ADDR + PORT
 
-	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/v1/login", loginHandler)
+	http.HandleFunc("/v1/signup", signupHandler)
 
 	log.Println("Serving web server @ : " + ADDR)
 	err := http.ListenAndServe(ADDR, nil)

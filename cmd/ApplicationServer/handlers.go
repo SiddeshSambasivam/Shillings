@@ -1,37 +1,54 @@
 package main
 
 import (
+	"log"
 	"net"
 
-	"github.com/SiddeshSambasivam/shillings/pkg/models"
+	protocols "github.com/SiddeshSambasivam/shillings/pkg/protocols"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
+	"google.golang.org/protobuf/proto"
 )
 
-func (env *DataEnv) createUser(conn net.Conn, req *pb.RequestSignup) {}
+// Handles user signup command
+func (env *DataEnv) commandHandlerSGN(conn net.Conn) {
 
-func (env *DataEnv) getUserProfile(conn net.Conn, req *pb.RequestGetUser) {
-
-	row := env.DB.QueryRow("SELECT * FROM profiles WHERE user_id = ?", req.GetUserId())
-
-	var u models.User
-	err := row.Scan(
-		&u.User_id,
-		&u.First_name,
-		&u.Middle_name,
-		&u.Last_name,
-		&u.Email,
-		&u.Phone,
-		&u.Balance,
-		&u.Created_at,
-		&u.Updated_at,
-	)
-
+	dataBuffer, err := protocols.ReadProtocolData(conn)
 	if err != nil {
-		sendCmdErrResponse(
+		log.Println("Error reading data: ", err)
+		SendSignupErrResponse(
 			conn,
 			pb.Code_INTERNAL_SERVER_ERROR,
-			"Error fetching user: "+err.Error(),
+			"Error reading data: "+err.Error(),
 		)
 	}
 
+	req := pb.RequestSignup{}
+	err = proto.Unmarshal(dataBuffer, &req)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendSignupErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	err = env.createUser(conn, &req)
+	if err != nil {
+		log.Println("Error creating user: ", err)
+		SendSignupErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error creating user: "+err.Error(),
+		)
+	}
+
+	resp := &pb.ResponseSignup{
+		Status: &pb.Status{
+			Code:    pb.Code_OK,
+			Message: "User created successfully",
+		},
+	}
+
+	protocols.SendProtocolData(conn, resp)
 }
