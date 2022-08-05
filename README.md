@@ -104,16 +104,12 @@ Request body:
 
 ```json
 {
-    "user": {
-        "first_name": " <first_name>",
-        "middle_name": " <middle_name>",
-        "last_name": " <last_name>",
-        "email": " <email>",
-        "phone": " <phone>"
-    },
-    "credentials": {
-        "password": " <password>"
-    }
+    "first_name": " <first_name>",
+    "middle_name": " <middle_name>",
+    "last_name": " <last_name>",
+    "email": " <email>",
+    "phone": " <phone>",
+    "password": " <password>"
 }
 ```
 
