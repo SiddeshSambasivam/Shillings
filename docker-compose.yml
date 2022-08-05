@@ -1,34 +1,62 @@
-version: '3.6'
+version: '3.7'
+
 services:
-  mysql:
-    build: 
-      dockerfile: ./docker/db/Dockerfile
+
+  db:
+    container_name: "Shillings_database"
+    build:
       context: .
+      dockerfile: ./docker/db/Dockerfile
+    networks:
+      - default
+    restart: always
     ports:
-      - '33061:3306'
-    volumes:      
-      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql
-  
-  web:
-    stdin_open: true    
-    build: 
-      dockerfile: ./docker/web/Dockerfile
-      context: .    
+      - '3306:3306'
     environment:
-      - WEB_PORT=8010
+      MYSQL_RANDOM_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "shillings"
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "admin"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  web:
+    container_name: "Web_server"
+    build:
+      context: .
+      dockerfile: ./docker/web/Dockerfile
+    networks:
+      - default
     ports:
       - '8010:8010'
       - '8000:8000'
     depends_on:
-      - app
-      
+      - db
+    environment:
+      - WEB_PORT=8010
+    volumes:
+      - .:/go/src/cTCP
+
   app:
-    build: 
-      dockerfile: ./docker/app/Dockerfile
+    container_name: "Application_server"
+    build:
       context: .
+      dockerfile: ./docker/app/Dockerfile
+    networks:
+      - default
     environment:
       - APP_PORT=8020
+      - DBUSER=admin
+      - DBPASS=admin
     ports:
       - '8020:8020'
     depends_on:
-      - mysql
+      - db
+    volumes:
+      - .:/go/src/cTCP
+
+networks:
+  default:
+volumes:
+  mysql_data:
