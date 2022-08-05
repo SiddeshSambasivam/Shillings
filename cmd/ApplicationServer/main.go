@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 
 	pkg "github.com/SiddeshSambasivam/shillings/pkg"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
@@ -120,6 +121,19 @@ func main() {
 	log.Println("Serving application server @ : " + ADDR)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	pkg.HandleErrorWithExt(err)
+
+	Db := pkg.DbConn()
+	Db.SetConnMaxLifetime(3 * time.Hour)
+	Db.SetMaxOpenConns(3000)
+	Db.SetMaxIdleConns(3000)
+	defer listener.Close()
+
+	row, err := Db.Query("SELECT * FROM users")
+	pkg.HandleErrorWithExt(err)
+	// iterate over the rows
+	for row.Next() {
+		log.Println("Row: ", row)
+	}
 
 	for {
 		conn, err := listener.Accept()

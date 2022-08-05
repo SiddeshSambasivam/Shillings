@@ -7,7 +7,7 @@ import (
 
 func HandleErrorWithExt(err error) {
 	if err != nil {
-		fmt.Println("error (my message): ", err.Error())
+		fmt.Println("Error: ", err.Error())
 		os.Exit(1)
 	}
 }
