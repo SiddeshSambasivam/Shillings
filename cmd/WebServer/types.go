@@ -16,6 +16,9 @@ type Auth struct {
 	ExpirationTime int64  `json:"expiration_time"`
 }
 
+type Transaction struct {
+}
+
 type LoginResponse struct {
 	Status Status `json:"status"`
 }
@@ -25,7 +28,20 @@ type UserResponse struct {
 	Status Status      `json:"status"`
 }
 
+type PaymentRequest struct {
+	Receiver_email string  `json:"receiver_email"`
+	Amount         float32 `json:"amount"`
+}
+
 type PaymentResponse struct {
 	Transaction_id int64  `json:"transaction_id"`
 	Status         Status `json:"status"`
+}
+
+type TopupRequest struct {
+	Amount float32 `json:"amount"`
+}
+
+type TopupResponse struct {
+	Status Status `json:"status"`
 }

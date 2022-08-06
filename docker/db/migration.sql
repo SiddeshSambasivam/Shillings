@@ -21,7 +21,9 @@ CREATE INDEX idx_email on users(email);
 CREATE TABLE transactions (
     transaction_id int(11) NOT NULL AUTO_INCREMENT,
     sender_id int(11) NOT NULL,
+    sender_email varchar(255) NOT NULL,
     receiver_id int(11) NOT NULL,
+    receiver_email varchar(255) NOT NULL,
     amount FLOAT(6) NOT NULL,
     created_at int NOT NULL,        
     PRIMARY KEY (transaction_id)    

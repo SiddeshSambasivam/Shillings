@@ -48,11 +48,17 @@ func (env *DataEnv) handleConnection(conn net.Conn) {
 		env.commandHandlerPAY(conn)
 
 	case pb.Command_TPU:
-		log.Println("Topup command received")
+		env.commandHandlerTPU(conn)
+
 	case pb.Command_TXQ:
 		log.Println("Transaction query command received")
+
 	default:
-		log.Println("Unknown command received")
+		sendCmdErrResponse(
+			conn,
+			pb.Code_BAD_REQUEST,
+			"Invalid Command: "+err.Error(),
+		)
 	}
 }
 
@@ -93,7 +99,6 @@ func main() {
 			continue
 		}
 
-		log.Println("Accepted connection: ", conn.RemoteAddr())
 		go env.handleConnection(conn)
 
 	}

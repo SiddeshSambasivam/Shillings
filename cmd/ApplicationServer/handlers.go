@@ -157,3 +157,38 @@ func (env *DataEnv) commandHandlerPAY(conn net.Conn) {
 
 	protocols.SendProtocolData(conn, resp)
 }
+
+func (env *DataEnv) commandHandlerTPU(conn net.Conn) {
+	dataBuffer, err := protocols.ReadProtocolData(conn)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	req := pb.RequestTopupUser{}
+	err = proto.Unmarshal(dataBuffer, &req)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	resp, err := env.TopUpUser(&req)
+	if err != nil {
+		log.Println("Error topping up user: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_BAD_REQUEST,
+			"Error topping up user: "+err.Error(),
+		)
+	}
+
+	protocols.SendProtocolData(conn, resp)
+}

@@ -59,8 +59,6 @@ func (env *DataEnv) createUser(req *pb.RequestSignup) error {
 		log.Println("Error getting last inserted id", err)
 	}
 
-	log.Println("Created User_id:", user_id)
-
 	createCredQry := "INSERT INTO credentials (user_id, email, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
 	ins, err = env.DB.PrepareContext(ctx, createCredQry)
 	if err != nil {
@@ -72,12 +70,10 @@ func (env *DataEnv) createUser(req *pb.RequestSignup) error {
 		log.Println("Error inserting cred", err)
 	}
 
-	cred_id, err := res.LastInsertId()
+	_, err = res.LastInsertId()
 	if err != nil {
 		log.Println("Error getting last inserted id", err)
 	}
-
-	log.Println("Created Credential_id:", cred_id)
 
 	return nil
 }
@@ -109,7 +105,6 @@ func (env *DataEnv) loginUser(req *pb.RequestLogin) (protoreflect.ProtoMessage, 
 		return nil, err
 	}
 
-	log.Println("Fetched creds:", creds.Email, creds.Password)
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(creds.Password),
 		[]byte(req.Credentials.GetPassword()),
@@ -118,8 +113,6 @@ func (env *DataEnv) loginUser(req *pb.RequestLogin) (protoreflect.ProtoMessage, 
 		err = errors.New("incorrect password")
 		return nil, err
 	}
-
-	log.Println("Logged in user:", creds.Email)
 
 	tokenString, expirationTime, err := generateJWT(creds.User_id)
 	if err != nil {
@@ -163,8 +156,6 @@ func (env *DataEnv) GetUser(req *pb.RequestGetUser) (protoreflect.ProtoMessage, 
 		log.Println("Error fetching user", err)
 		return nil, err
 	}
-
-	log.Println("Fetched user: ", user.Email)
 
 	u := &pb.User{
 		UserId:     user.User_id,
@@ -219,15 +210,11 @@ func (env *DataEnv) PayUser(req *pb.RequestPayUser) (protoreflect.ProtoMessage, 
 		return nil, err
 	}
 
-	log.Println("Sender user: ", sender.Email)
-
 	receiver, err := env.getUserAccountByEmail(req.GetReceiverEmail())
 	if err != nil {
 		log.Println("Error fetching user", err)
 		return nil, err
 	}
-
-	log.Println("Receiver user: ", receiver.Email)
 
 	if receiver.User_id == sender_id {
 		err = errors.New("sender and receiver cannot be the same")
@@ -265,7 +252,9 @@ func (env *DataEnv) PayUser(req *pb.RequestPayUser) (protoreflect.ProtoMessage, 
 	}
 
 	// insert new transaction to transactions table
-	res, err := tx.ExecContext(ctx, "INSERT INTO transactions (sender_id, receiver_id, amount, created_at) VALUES (?, ?, ?, ?)", sender.User_id, receiver.User_id, req.GetAmount(), time.Now().Unix())
+	res, err := tx.ExecContext(ctx,
+		"INSERT INTO transactions (sender_id, receiver_id, amount, created_at, sender_email, receiver_email) VALUES (?, ?, ?, ?, ?, ?)",
+		sender.User_id, receiver.User_id, req.GetAmount(), time.Now().Unix(), sender.Email, receiver.Email)
 	if err != nil {
 		log.Println("Error inserting transaction", err)
 		return nil, err
@@ -283,14 +272,81 @@ func (env *DataEnv) PayUser(req *pb.RequestPayUser) (protoreflect.ProtoMessage, 
 		return nil, err
 	}
 
-	log.Println("Paid user: ", receiver.Email)
-
 	resp := &pb.ResponsePayUser{
 		Status: &pb.Status{
 			Code:    pb.Code_OK,
 			Message: "Payment successful",
 		},
 		TransactionId: transaction_id,
+	}
+
+	return resp, nil
+
+}
+
+func (env *DataEnv) TopUpUser(req *pb.RequestTopupUser) (protoreflect.ProtoMessage, error) {
+
+	isauth, claims, err := isAuthenticated(req.GetAuth().GetToken())
+	if err != nil {
+		return nil, err
+	}
+	if !isauth {
+		return nil, errors.New("user not authenticated")
+	}
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	var user models.User
+	fetchCredQuery := "SELECT * from users where user_id = ?"
+	err = env.DB.QueryRowContext(
+		ctx,
+		fetchCredQuery, claims.User_id,
+	).Scan(&user.User_id, &user.First_name, &user.Middle_name, &user.Last_name, &user.Email, &user.Phone, &user.Balance, &user.Created_at, &user.Updated_at)
+	if err != nil {
+		log.Println("Error fetching user", err)
+		return nil, err
+	}
+
+	// begin a db transaction
+	tx, err := env.DB.BeginTx(ctx, nil)
+	if err != nil {
+		log.Println("Error beginning transaction", err)
+		return nil, err
+	}
+
+	// update the user's balance
+	_, err = tx.ExecContext(
+		ctx,
+		"UPDATE users SET balance = ? WHERE user_id = ?",
+		req.GetAmount()+user.Balance,
+		claims.User_id,
+	)
+	if err != nil {
+		log.Println("Error updating user balance", err)
+		return nil, err
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO transactions (sender_id, receiver_id, amount, created_at, sender_email, receiver_email) VALUES (?, ?, ?, ?, ?, ?)",
+		claims.User_id, claims.User_id, req.GetAmount(), time.Now().Unix(), user.Email, user.Email)
+	if err != nil {
+		log.Println("Error inserting transaction", err)
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println("Error committing transaction", err)
+		return nil, err
+	}
+
+	resp := &pb.ResponseTopupUser{
+		Status: &pb.Status{
+			Code:    pb.Code_OK,
+			Message: "Topup successful",
+		},
 	}
 
 	return resp, nil

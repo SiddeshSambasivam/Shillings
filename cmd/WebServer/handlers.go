@@ -238,7 +238,7 @@ func paymentHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var paymentReq models.PaymentRequest
+		var paymentReq PaymentRequest
 
 		json.Unmarshal(data, &paymentReq)
 		if paymentReq.Amount <= 0 {
@@ -393,6 +393,200 @@ func userAccountHandler(w http.ResponseWriter, r *http.Request) {
 				Created_at:  response.GetUser().GetCreatedAt(),
 				Updated_at:  response.GetUser().GetUpdatedAt(),
 			},
+			Status: Status{
+				Code:    int32(response.GetStatus().GetCode()),
+				Message: response.GetStatus().GetMessage(),
+			},
+		}
+
+		jsonResp, err := json.Marshal(jsonData)
+		if err != nil {
+			log.Println("Error marshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		switch jsonData.Status.Code {
+		case int32(pb.Code_OK):
+			w.WriteHeader(http.StatusOK)
+		case int32(pb.Code_UNAUTHORIZED):
+			w.WriteHeader(http.StatusUnauthorized)
+		case int32(pb.Code_BAD_REQUEST):
+			w.WriteHeader(http.StatusBadRequest)
+		case int32(pb.Code_INTERNAL_SERVER_ERROR):
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		case int32(pb.Code_FORBIDDEN):
+			w.WriteHeader(http.StatusForbidden)
+		case int32(pb.Code_Conflict):
+			w.WriteHeader(http.StatusConflict)
+		}
+
+		w.Write(jsonResp)
+
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func topupHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case "POST":
+		w.Header().Set("Content-Type", "application/json")
+		authToken, _ := r.Cookie("token")
+		if authToken == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var topupreq TopupRequest
+
+		json.Unmarshal(data, &topupreq)
+		if topupreq.Amount <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		client, err := net.Dial("tcp", "app:8020")
+		if err != nil {
+			log.Println("Error dialing:", err)
+			return
+		}
+
+		defer client.Close()
+		cmd := &pb.RequestCommand{Command: pb.Command_TPU}
+
+		err = protocols.SendProtocolData(client, cmd)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		request := &pb.RequestTopupUser{
+			Auth: &pb.Auth{
+				Token: authToken.Value,
+			},
+			Amount: topupreq.Amount,
+		}
+
+		err = protocols.SendProtocolData(client, request)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		response := &pb.ResponseTopupUser{}
+		respBytes, err := protocols.ReadProtocolData(client)
+		if err != nil {
+			log.Println("Error reading data from application server: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = proto.Unmarshal(respBytes, response)
+		if err != nil {
+			log.Println("Error unmarshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		jsonData := TopupResponse{
+			Status: Status{
+				Code:    int32(response.GetStatus().GetCode()),
+				Message: response.GetStatus().GetMessage(),
+			},
+		}
+
+		jsonResp, err := json.Marshal(jsonData)
+		if err != nil {
+			log.Println("Error marshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		switch jsonData.Status.Code {
+		case int32(pb.Code_OK):
+			w.WriteHeader(http.StatusOK)
+		case int32(pb.Code_UNAUTHORIZED):
+			w.WriteHeader(http.StatusUnauthorized)
+		case int32(pb.Code_BAD_REQUEST):
+			w.WriteHeader(http.StatusBadRequest)
+		case int32(pb.Code_INTERNAL_SERVER_ERROR):
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		case int32(pb.Code_FORBIDDEN):
+			w.WriteHeader(http.StatusForbidden)
+		case int32(pb.Code_Conflict):
+			w.WriteHeader(http.StatusConflict)
+		}
+
+		w.Write(jsonResp)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func transactionsHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case "GET":
+		w.Header().Set("Content-Type", "application/json")
+
+		authToken, _ := r.Cookie("token")
+		if authToken == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		client, err := net.Dial("tcp", "app:8020")
+		if err != nil {
+			log.Println("Error dialing:", err)
+			return
+		}
+
+		defer client.Close()
+		cmd := &pb.RequestCommand{Command: pb.Command_TXQ}
+
+		err = protocols.SendProtocolData(client, cmd)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		request := &pb.RequestGetUser{
+			Auth: &pb.Auth{
+				Token: authToken.Value,
+			},
+		}
+		err = protocols.SendProtocolData(client, request)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		response := &pb.ResponseGetUserTransactions{}
+		respBytes, err := protocols.ReadProtocolData(client)
+		if err != nil {
+			log.Println("Error reading data from application server: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = proto.Unmarshal(respBytes, response)
+		if err != nil {
+			log.Println("Error unmarshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		jsonData := UserResponse{
 			Status: Status{
 				Code:    int32(response.GetStatus().GetCode()),
 				Message: response.GetStatus().GetMessage(),
