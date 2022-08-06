@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"net"
 	"time"
 
 	"github.com/SiddeshSambasivam/shillings/pkg/models"
@@ -13,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func (env *DataEnv) createUser(conn net.Conn, req *pb.RequestSignup) error {
+func (env *DataEnv) createUser(req *pb.RequestSignup) error {
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
@@ -83,7 +82,7 @@ func (env *DataEnv) createUser(conn net.Conn, req *pb.RequestSignup) error {
 	return nil
 }
 
-func (env *DataEnv) loginUser(conn net.Conn, req *pb.RequestLogin) (protoreflect.ProtoMessage, error) {
+func (env *DataEnv) loginUser(req *pb.RequestLogin) (protoreflect.ProtoMessage, error) {
 
 	exists, err := env.checkUserExists(req.GetCredentials().GetEmail())
 	if err != nil {
@@ -141,7 +140,7 @@ func (env *DataEnv) loginUser(conn net.Conn, req *pb.RequestLogin) (protoreflect
 	return resp, nil
 }
 
-func (env *DataEnv) GetUser(conn net.Conn, req *pb.RequestGetUser) (protoreflect.ProtoMessage, error) {
+func (env *DataEnv) GetUser(req *pb.RequestGetUser) (protoreflect.ProtoMessage, error) {
 
 	isauth, claims, err := isAuthenticated(req.GetAuth().GetToken())
 	if err != nil {
@@ -186,6 +185,112 @@ func (env *DataEnv) GetUser(conn net.Conn, req *pb.RequestGetUser) (protoreflect
 			Code:    pb.Code_OK,
 			Message: "User fetched successfully",
 		},
+	}
+
+	return resp, nil
+
+}
+
+func (env *DataEnv) PayUser(req *pb.RequestPayUser) (protoreflect.ProtoMessage, error) {
+
+	isauth, claims, err := isAuthenticated(req.GetAuth().GetToken())
+	if err != nil {
+		return nil, err
+	}
+	if !isauth {
+		return nil, errors.New("user not authenticated")
+	}
+
+	exists, err := env.checkUserExists(req.GetReceiverEmail())
+	if err != nil {
+		log.Println("Error checking if user exists", err)
+		return nil, err
+	}
+
+	if !exists {
+		err = errors.New("Sender with email " + req.GetReceiverEmail() + " does not exist")
+		return nil, err
+	}
+
+	sender_id := claims.User_id
+	sender, err := env.getUserAccountByID(sender_id)
+	if err != nil {
+		log.Println("Error fetching user", err)
+		return nil, err
+	}
+
+	log.Println("Sender user: ", sender.Email)
+
+	receiver, err := env.getUserAccountByEmail(req.GetReceiverEmail())
+	if err != nil {
+		log.Println("Error fetching user", err)
+		return nil, err
+	}
+
+	log.Println("Receiver user: ", receiver.Email)
+
+	if receiver.User_id == sender_id {
+		err = errors.New("sender and receiver cannot be the same")
+		return nil, err
+	}
+
+	if sender.Balance < req.GetAmount() {
+		err = errors.New("insufficient balance")
+		return nil, err
+	}
+
+	sender.Balance -= req.GetAmount()
+	receiver.Balance += req.GetAmount()
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	tx, err := env.DB.BeginTx(ctx, nil)
+	if err != nil {
+		log.Println("Error beginning transaction", err)
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, "UPDATE users SET balance = ? WHERE user_id = ?", sender.Balance, sender.User_id)
+	if err != nil {
+		log.Println("Error updating sender balance", err)
+		return nil, err
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE users SET balance = ? WHERE user_id = ?", receiver.Balance, receiver.User_id)
+	if err != nil {
+		log.Println("Error updating receiver balance", err)
+		return nil, err
+	}
+
+	// insert new transaction to transactions table
+	res, err := tx.ExecContext(ctx, "INSERT INTO transactions (sender_id, receiver_id, amount, created_at) VALUES (?, ?, ?, ?)", sender.User_id, receiver.User_id, req.GetAmount(), time.Now().Unix())
+	if err != nil {
+		log.Println("Error inserting transaction", err)
+		return nil, err
+	}
+
+	transaction_id, err := res.LastInsertId()
+	if err != nil {
+		log.Println("Error getting last insert id", err)
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println("Error committing transaction", err)
+		return nil, err
+	}
+
+	log.Println("Paid user: ", receiver.Email)
+
+	resp := &pb.ResponsePayUser{
+		Status: &pb.Status{
+			Code:    pb.Code_OK,
+			Message: "Payment successful",
+		},
+		TransactionId: transaction_id,
 	}
 
 	return resp, nil

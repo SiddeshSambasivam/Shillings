@@ -221,6 +221,113 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func paymentHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+
+		w.Header().Set("Content-Type", "application/json")
+		authToken, _ := r.Cookie("token")
+		if authToken == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var paymentReq models.PaymentRequest
+
+		json.Unmarshal(data, &paymentReq)
+		if paymentReq.Amount <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		client, err := net.Dial("tcp", "app:8020")
+		if err != nil {
+			log.Println("Error dialing:", err)
+			return
+		}
+
+		defer client.Close()
+		cmd := &pb.RequestCommand{Command: pb.Command_PAY}
+
+		err = protocols.SendProtocolData(client, cmd)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		request := &pb.RequestPayUser{
+			Auth: &pb.Auth{
+				Token: authToken.Value,
+			},
+			ReceiverEmail: paymentReq.Receiver_email,
+			Amount:        paymentReq.Amount,
+		}
+
+		err = protocols.SendProtocolData(client, request)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		response := &pb.ResponsePayUser{}
+		respBytes, err := protocols.ReadProtocolData(client)
+		if err != nil {
+			log.Println("Error reading data from application server: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = proto.Unmarshal(respBytes, response)
+		if err != nil {
+			log.Println("Error unmarshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		jsonData := PaymentResponse{
+			Status: Status{
+				Code:    int32(response.GetStatus().GetCode()),
+				Message: response.GetStatus().GetMessage(),
+			},
+			Transaction_id: response.GetTransactionId(),
+		}
+
+		jsonResp, err := json.Marshal(jsonData)
+		if err != nil {
+			log.Println("Error marshalling response: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		switch jsonData.Status.Code {
+		case int32(pb.Code_OK):
+			w.WriteHeader(http.StatusOK)
+		case int32(pb.Code_UNAUTHORIZED):
+			w.WriteHeader(http.StatusUnauthorized)
+		case int32(pb.Code_BAD_REQUEST):
+			w.WriteHeader(http.StatusBadRequest)
+		case int32(pb.Code_INTERNAL_SERVER_ERROR):
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		case int32(pb.Code_FORBIDDEN):
+			w.WriteHeader(http.StatusForbidden)
+		case int32(pb.Code_Conflict):
+			w.WriteHeader(http.StatusConflict)
+		}
+
+		w.Write(jsonResp)
+
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func userAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {

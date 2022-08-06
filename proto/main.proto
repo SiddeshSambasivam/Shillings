@@ -112,19 +112,16 @@ message ResponseGetUser {
     Auth auth = 3;
 }
 
-message RequestPayUser {
-    int32 sender_id = 1;
-    int32 receiver_id = 2;
-    string sender_name = 3;
-    string receiver_name = 4;
-    float amount = 5;
-    int64 created_at = 6;
-    Auth auth = 7;
+message RequestPayUser {    
+    string receiver_email = 1;        
+    float amount = 2;   
+    Auth auth=3;     
 }
 
 message ResponsePayUser {
-    Status status = 1;
-    Auth auth = 2;
+    int64 transaction_id = 1;
+    Status status = 2;
+    Auth auth = 3;
 }
 
 message RequestTopupUser {

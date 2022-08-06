@@ -24,3 +24,8 @@ type UserResponse struct {
 	User   models.User `json:"user"`
 	Status Status      `json:"status"`
 }
+
+type PaymentResponse struct {
+	Transaction_id int64  `json:"transaction_id"`
+	Status         Status `json:"status"`
+}

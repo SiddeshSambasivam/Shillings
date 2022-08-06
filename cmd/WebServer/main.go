@@ -24,6 +24,7 @@ func main() {
 	http.HandleFunc("/v1/login", loginHandler)
 	http.HandleFunc("/v1/signup", signupHandler)
 	http.HandleFunc("/v1/account", userAccountHandler)
+	http.HandleFunc("/v1/pay", paymentHandler)
 
 	log.Println("Serving web server @ : " + ADDR)
 	err := http.ListenAndServe(ADDR, nil)

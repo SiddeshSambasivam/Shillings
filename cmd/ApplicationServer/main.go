@@ -45,7 +45,8 @@ func (env *DataEnv) handleConnection(conn net.Conn) {
 		env.commandHandlerUSR(conn)
 
 	case pb.Command_PAY:
-		log.Println("Pay command received")
+		env.commandHandlerPAY(conn)
+
 	case pb.Command_TPU:
 		log.Println("Topup command received")
 	case pb.Command_TXQ:

@@ -33,7 +33,7 @@ func (env *DataEnv) commandHandlerSGN(conn net.Conn) {
 		)
 	}
 
-	err = env.createUser(conn, &req)
+	err = env.createUser(&req)
 	if err != nil {
 		log.Println("Error creating user: ", err)
 		SendSignupErrResponse(
@@ -75,7 +75,7 @@ func (env *DataEnv) commandHandlerLGN(conn net.Conn) {
 		)
 	}
 
-	resp, err := env.loginUser(conn, &req)
+	resp, err := env.loginUser(&req)
 	if err != nil {
 		log.Println("Error authenticating user: ", err)
 		SendLoginErrResponse(
@@ -110,13 +110,48 @@ func (env *DataEnv) commandHandlerUSR(conn net.Conn) {
 		)
 	}
 
-	resp, err := env.GetUser(conn, &req)
+	resp, err := env.GetUser(&req)
 	if err != nil {
 		log.Println("Error fetching user: ", err)
 		SendUserErrResponse(
 			conn,
 			pb.Code_Conflict,
 			"Error fetching user: "+err.Error(),
+		)
+	}
+
+	protocols.SendProtocolData(conn, resp)
+}
+
+func (env *DataEnv) commandHandlerPAY(conn net.Conn) {
+	dataBuffer, err := protocols.ReadProtocolData(conn)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	req := pb.RequestPayUser{}
+	err = proto.Unmarshal(dataBuffer, &req)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	resp, err := env.PayUser(&req)
+	if err != nil {
+		log.Println("Error paying user: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_BAD_REQUEST,
+			"Error paying user: "+err.Error(),
 		)
 	}
 

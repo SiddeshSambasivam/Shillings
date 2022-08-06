@@ -76,6 +76,46 @@ func (env *DataEnv) checkUserExists(email string) (bool, error) {
 	return false, nil
 }
 
+func (env *DataEnv) getUserAccountByID(user_id int32) (models.User, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	var user models.User
+	fetchCredQuery := "SELECT * from users where user_id = ?"
+	err := env.DB.QueryRowContext(
+		ctx,
+		fetchCredQuery, user_id,
+	).Scan(&user.User_id, &user.First_name, &user.Middle_name, &user.Last_name, &user.Email, &user.Phone, &user.Balance, &user.Created_at, &user.Updated_at)
+
+	if err != nil {
+		log.Println("Error fetching user", err)
+		return user, err
+	}
+
+	return user, nil
+
+}
+
+func (env *DataEnv) getUserAccountByEmail(email string) (models.User, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	var user models.User
+	fetchCredQuery := "SELECT * from users where email = ?"
+	err := env.DB.QueryRowContext(
+		ctx,
+		fetchCredQuery, email,
+	).Scan(&user.User_id, &user.First_name, &user.Middle_name, &user.Last_name, &user.Email, &user.Phone, &user.Balance, &user.Created_at, &user.Updated_at)
+
+	if err != nil {
+		log.Println("Error fetching user", err)
+		return user, err
+	}
+
+	return user, nil
+
+}
+
 func generateJWT(user_id int32) (string, time.Time, error) {
 
 	// Generate JWT token
