@@ -17,7 +17,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 
-		resp := make(map[string]string)
 		w.Header().Set("Content-Type", "application/json")
 
 		data, err := ioutil.ReadAll(r.Body)
@@ -59,26 +58,22 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		err = protocols.SendProtocolData(client, cmd)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			resp["message"] = err.Error()
 		}
 
 		err = protocols.SendProtocolData(client, request)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			resp["message"] = err.Error()
 		}
 
 		response := &pb.ResponseSignup{}
 		respBytes, err := protocols.ReadProtocolData(client)
 		if err != nil {
 			log.Println("Error reading data from application server: ", err)
-			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 		err = proto.Unmarshal(respBytes, response)
 		if err != nil {
 			log.Println("Error unmarshalling response: ", err)
-			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 		jsonData := SignUpResponse{
@@ -88,15 +83,25 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 
+		switch jsonData.Status.Code {
+		case int32(pb.Code_OK):
+			w.WriteHeader(http.StatusOK)
+		case int32(pb.Code_BAD_REQUEST):
+			w.WriteHeader(http.StatusBadRequest)
+		case int32(pb.Code_INTERNAL_SERVER_ERROR):
+			w.WriteHeader(http.StatusInternalServerError)
+		case int32(pb.Code_FORBIDDEN):
+			w.WriteHeader(http.StatusForbidden)
+		case int32(pb.Code_Conflict):
+			w.WriteHeader(http.StatusConflict)
+		}
+
 		jsonResp, err := json.Marshal(jsonData)
 		if err != nil {
 			log.Println("Error marshalling response: ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
-		if jsonData.Status.Code == int32(pb.Code_OK) {
-			w.WriteHeader(http.StatusOK)
-		}
 		w.Write(jsonResp)
 
 	default:

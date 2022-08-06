@@ -38,7 +38,7 @@ func (env *DataEnv) commandHandlerSGN(conn net.Conn) {
 		log.Println("Error creating user: ", err)
 		SendSignupErrResponse(
 			conn,
-			pb.Code_INTERNAL_SERVER_ERROR,
+			pb.Code_Conflict,
 			"Error creating user: "+err.Error(),
 		)
 	}
