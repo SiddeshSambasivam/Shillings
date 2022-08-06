@@ -109,6 +109,7 @@ message RequestGetUser {
 message ResponseGetUser {
     User user = 1;
     Status status = 2;
+    Auth auth = 3;
 }
 
 message RequestPayUser {
@@ -123,6 +124,7 @@ message RequestPayUser {
 
 message ResponsePayUser {
     Status status = 1;
+    Auth auth = 2;
 }
 
 message RequestTopupUser {
@@ -134,6 +136,7 @@ message RequestTopupUser {
 
 message ResponseTopupUser {
     Status status = 1;
+    Auth auth = 2;
 }
 
 message RequestGetUserTransactions {
@@ -144,4 +147,5 @@ message RequestGetUserTransactions {
 message ResponseGetUserTransactions {
     repeated Transaction transactions = 1;
     Status status = 2;
+    Auth auth = 3;
 }

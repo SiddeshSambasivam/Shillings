@@ -11,6 +11,8 @@ import (
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
 )
 
+var jwtKey []byte
+
 type DataEnv struct {
 	DB *sql.DB
 }
@@ -34,13 +36,14 @@ func (env *DataEnv) handleConnection(conn net.Conn) {
 
 	switch cmd {
 	case pb.Command_LGN:
-		log.Println("Login command received")
+		env.commandHandlerLGN(conn)
 
 	case pb.Command_SGN:
 		env.commandHandlerSGN(conn)
 
 	case pb.Command_USR:
-		log.Println("User command received")
+		env.commandHandlerUSR(conn)
+
 	case pb.Command_PAY:
 		log.Println("Pay command received")
 	case pb.Command_TPU:
@@ -58,9 +61,15 @@ func main() {
 	var ADDR = "127.0.0.1"
 
 	envPort := ":" + envtools.GetEnvVar("APP_PORT")
-	log.Println("Loaded env var: ", envPort)
+	log.Println("Loaded env var(port): ", envPort)
 	if envPort != "" {
 		PORT = envPort
+	}
+
+	envJwt := envtools.GetEnvVar("JWT_KEY")
+	log.Println("Loaded env var(Jwt key): ", jwtKey)
+	if envJwt != "" {
+		jwtKey = []byte(envJwt)
 	}
 
 	ADDR = ADDR + PORT

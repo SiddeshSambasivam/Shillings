@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net"
+	"time"
 
+	"github.com/SiddeshSambasivam/shillings/pkg/models"
 	protocols "github.com/SiddeshSambasivam/shillings/pkg/protocols"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
+	"github.com/dgrijalva/jwt-go"
 )
 
 func sendCmdErrResponse(conn net.Conn, status_code pb.Code, err_message string) {
@@ -27,4 +32,90 @@ func SendSignupErrResponse(conn net.Conn, status_code pb.Code, err_message strin
 	}
 
 	protocols.SendProtocolData(conn, response)
+}
+
+func SendLoginErrResponse(conn net.Conn, status_code pb.Code, err_message string) {
+	response := &pb.ResponseLogin{
+		Status: &pb.Status{
+			Code:    status_code,
+			Message: err_message,
+		},
+	}
+
+	protocols.SendProtocolData(conn, response)
+}
+
+func SendUserErrResponse(conn net.Conn, status_code pb.Code, err_message string) {
+	response := &pb.ResponseGetUser{
+		Status: &pb.Status{
+			Code:    status_code,
+			Message: err_message,
+		},
+	}
+
+	protocols.SendProtocolData(conn, response)
+}
+
+func (env *DataEnv) checkUserExists(email string) (bool, error) {
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	var exists bool
+
+	row := env.DB.QueryRowContext(ctx, "SELECT EXISTS (SELECT EMAIL FROM users WHERE EMAIL = ?)", email)
+	if err := row.Scan(&exists); err != nil {
+		log.Println("Error checking if user exists", err)
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func generateJWT(user_id int32) (string, time.Time, error) {
+
+	// Generate JWT token
+	expirationTime := time.Now().Add(15 * time.Minute)
+
+	// Create the JWT claims, which includes the username and expiry time
+	claims := &models.Claims{
+		User_id: user_id,
+		StandardClaims: jwt.StandardClaims{
+			// In JWT, the expiry time is expressed as unix milliseconds
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	// Declare the token with the algorithm used for signing, and the claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Create the JWT string
+	tokenString, err := token.SignedString(jwtKey)
+
+	return tokenString, expirationTime, err
+}
+
+func isAuthenticated(token string) (bool, models.Claims, error) {
+
+	claims := &models.Claims{}
+
+	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		log.Println("Return an internal server error")
+		return false, *claims, err
+	}
+
+	if !tkn.Valid {
+		log.Println("Unauthorized.")
+		return false, *claims, err
+	}
+
+	return true, *claims, err
 }

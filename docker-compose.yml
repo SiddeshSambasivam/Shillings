@@ -49,6 +49,7 @@ services:
       - APP_PORT=8020
       - DBUSER=admin
       - DBPASS=admin
+      - JWT_KEY=thisisastrongkey
     ports:
       - '8020:8020'
     depends_on:
