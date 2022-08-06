@@ -245,8 +245,8 @@ Response:
 
 #### **Tasks**
 
--   [ ] write the API handlers
--   [ ] Write the utility functions to handle protobuf, read and write requests with platform layer
+-   [x] write the API handlers
+-   [x] Write the utility functions to handle protobuf, read and write requests with platform layer
 
 ### 3. Platform Layer
 
@@ -264,9 +264,9 @@ Response:
 -   [x] Write the required protobuf messages for the communication protocol
     -   [x] Compile the protobuf messages with `protoc`
 -   [x] Write the communication protocol
--   [ ] Write the handlers for each command
+-   [x] Write the handlers for each command
 -   [x] Setup database handlers
-    -   [ ] Write connection pool for the database
+    -   [x] Write connection pool for the database
 -   [ ] Setup redis handlers
     -   [ ] Write connection pool for the redis database
 -   [ ] Add health check for platform server.

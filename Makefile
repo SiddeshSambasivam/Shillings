@@ -1,6 +1,9 @@
 protobuf:
 	export PATH="$(PATH):$(go env GOPATH)/bin" ; cd ./proto/ ; protoc --go_out=./ main.proto
 
+prod:
+	docker compose up --scale web=5
+
 build:
 	docker compose build --no-cache
 
