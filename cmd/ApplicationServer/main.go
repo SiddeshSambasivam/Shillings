@@ -51,7 +51,7 @@ func (env *DataEnv) handleConnection(conn net.Conn) {
 		env.commandHandlerTPU(conn)
 
 	case pb.Command_TXQ:
-		log.Println("Transaction query command received")
+		env.commandHandlerTXN(conn)
 
 	default:
 		sendCmdErrResponse(

@@ -192,3 +192,38 @@ func (env *DataEnv) commandHandlerTPU(conn net.Conn) {
 
 	protocols.SendProtocolData(conn, resp)
 }
+
+func (env *DataEnv) commandHandlerTXN(conn net.Conn) {
+	dataBuffer, err := protocols.ReadProtocolData(conn)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	req := pb.RequestGetUserTransactions{}
+	err = proto.Unmarshal(dataBuffer, &req)
+	if err != nil {
+		log.Println("Error reading data: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_INTERNAL_SERVER_ERROR,
+			"Error reading data: "+err.Error(),
+		)
+	}
+
+	resp, err := env.GetUSRTransactions(&req)
+	if err != nil {
+		log.Println("Error getting user transactions: ", err)
+		SendUserErrResponse(
+			conn,
+			pb.Code_BAD_REQUEST,
+			"Error getting user transactions: "+err.Error(),
+		)
+	}
+
+	protocols.SendProtocolData(conn, resp)
+}

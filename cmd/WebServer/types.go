@@ -17,6 +17,10 @@ type Auth struct {
 }
 
 type Transaction struct {
+	Sender_email   string  `json:"sender_email"`
+	Receiver_email string  `json:"receiver_email"`
+	Amount         float32 `json:"amount"`
+	Created_at     int64   `json:"created_at"`
 }
 
 type LoginResponse struct {
@@ -44,4 +48,9 @@ type TopupRequest struct {
 
 type TopupResponse struct {
 	Status Status `json:"status"`
+}
+
+type TransactionResponse struct {
+	Transactions []Transaction `json:"transactions"`
+	Status       Status        `json:"status"`
 }

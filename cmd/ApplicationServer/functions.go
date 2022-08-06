@@ -352,3 +352,57 @@ func (env *DataEnv) TopUpUser(req *pb.RequestTopupUser) (protoreflect.ProtoMessa
 	return resp, nil
 
 }
+
+func (env *DataEnv) GetUSRTransactions(req *pb.RequestGetUserTransactions) (protoreflect.ProtoMessage, error) {
+
+	isauth, claims, err := isAuthenticated(req.GetAuth().GetToken())
+	if err != nil {
+		return nil, err
+	}
+	if !isauth {
+		return nil, errors.New("user not authenticated")
+	}
+
+	log.Println(claims.Id)
+	// get all transactions for the user
+	var transactions []*pb.Transaction
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFunc()
+
+	rows, err := env.DB.QueryContext(
+		ctx,
+		"SELECT * from transactions where sender_id = ? or receiver_id = ?",
+		claims.User_id, claims.User_id,
+	)
+	if err != nil {
+		log.Println("Error fetching transactions", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var transaction models.Transaction
+		err = rows.Scan(&transaction.Transaction_id, &transaction.Sender_id, &transaction.Receiver_id, &transaction.Amount, &transaction.Created_at, &transaction.Sender_email, &transaction.Receiver_email)
+		if err != nil {
+			log.Println("Error scanning transaction", err)
+		}
+		transactions = append(transactions, &pb.Transaction{
+			TransactionId: transaction.Transaction_id,
+			SenderId:      transaction.Sender_id,
+			ReceiverId:    transaction.Receiver_id,
+			Amount:        transaction.Amount,
+			CreatedAt:     transaction.Created_at,
+			SenderEmail:   transaction.Sender_email,
+			ReceiverEmail: transaction.Receiver_email,
+		})
+	}
+
+	resp := &pb.ResponseGetUserTransactions{
+		Status: &pb.Status{
+			Code:    pb.Code_OK,
+			Message: "Transactions fetched successfully",
+		},
+		Transactions: transactions,
+	}
+
+	return resp, nil
+}

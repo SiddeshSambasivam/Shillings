@@ -586,7 +586,18 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		jsonData := UserResponse{
+		var transactions []Transaction
+		for _, tx := range response.GetTransactions() {
+			transactions = append(transactions, Transaction{
+				Sender_email:   tx.GetSenderEmail(),
+				Receiver_email: tx.GetReceiverEmail(),
+				Amount:         tx.GetAmount(),
+				Created_at:     tx.GetCreatedAt(),
+			})
+		}
+
+		jsonData := TransactionResponse{
+			Transactions: transactions,
 			Status: Status{
 				Code:    int32(response.GetStatus().GetCode()),
 				Message: response.GetStatus().GetMessage(),

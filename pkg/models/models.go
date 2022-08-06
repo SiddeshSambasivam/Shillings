@@ -32,3 +32,13 @@ type Claims struct {
 	User_id            int32 `json:"user_id"`
 	jwt.StandardClaims       // jwt.StandardClaims is a struct that contains the standard claims used by JWT.
 }
+
+type Transaction struct {
+	Transaction_id int64   `json:"transaction_id"`
+	Sender_id      int64   `json:"sender_id"`
+	Sender_email   string  `json:"sender_email"`
+	Receiver_id    int64   `json:"receiver_id"`
+	Receiver_email string  `json:"receiver_email"`
+	Amount         float32 `json:"amount"`
+	Created_at     int64   `json:"created_at"`
+}
