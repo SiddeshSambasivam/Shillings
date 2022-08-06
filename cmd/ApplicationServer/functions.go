@@ -363,8 +363,6 @@ func (env *DataEnv) GetUSRTransactions(req *pb.RequestGetUserTransactions) (prot
 		return nil, errors.New("user not authenticated")
 	}
 
-	log.Println(claims.Id)
-	// get all transactions for the user
 	var transactions []*pb.Transaction
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()

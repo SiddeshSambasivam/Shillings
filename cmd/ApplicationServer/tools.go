@@ -148,12 +148,10 @@ func isAuthenticated(token string) (bool, models.Claims, error) {
 	})
 
 	if err != nil {
-		log.Println("Return an internal server error")
 		return false, *claims, err
 	}
 
 	if !tkn.Valid {
-		log.Println("Unauthorized.")
 		return false, *claims, err
 	}
 
