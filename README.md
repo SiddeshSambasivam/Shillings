@@ -84,10 +84,6 @@ Response:
 
 ```json
 {
-    "auth": {
-        "token": " <token>",
-        "expiration_time": " <expiration_time>"
-    },
     "status": {
         "code": " <code>",
         "message": " <message>"
@@ -170,12 +166,8 @@ Request body:
 
 ```json
 {
-    "receiver_email": " <receiver_id>",
-    "amount": " <amount>",
-    "auth": {
-        "token": " <token>",
-        "expiration_time": " <expiration_time>"
-    }
+    "receiver_email": "<receiver_id>",
+    "amount": " <amount>"
 }
 ```
 
@@ -183,6 +175,7 @@ Response:
 
 ```json
 {
+    "transaction_id": "<transaction_id>",
     "status": {
         "code": " <code>",
         "message": " <message>"
@@ -200,11 +193,7 @@ Request body:
 ```json
 {
     "user_id": " <user_id>",
-    "amount": " <amount>",
-    "auth": {
-        "token": " <token>",
-        "expiration_time": " <expiration_time>"
-    }
+    "amount": " <amount>"
 }
 ```
 
@@ -228,11 +217,7 @@ Request body:
 
 ```json
 {
-    "user_id": " <user_id>",
-    "auth": {
-        "token": " <token>",
-        "expiration_time": " <expiration_time>"
-    }
+    "user_id": " <user_id>"
 }
 ```
 
