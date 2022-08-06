@@ -586,7 +586,7 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var transactions []Transaction
+		var transactions []Transaction = []Transaction{}
 		for _, tx := range response.GetTransactions() {
 			transactions = append(transactions, Transaction{
 				Sender_email:   tx.GetSenderEmail(),
