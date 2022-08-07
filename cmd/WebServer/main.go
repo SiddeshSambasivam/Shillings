@@ -2,17 +2,22 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 
 	envtools "github.com/SiddeshSambasivam/shillings/pkg/env"
 	errors "github.com/SiddeshSambasivam/shillings/pkg/errors"
 )
 
+var p Pool
+
 func main() {
 
 	var PORT = ":8000"
 	var ADDR = "0.0.0.0"
 	envPort := ":" + envtools.GetEnvVar("WEB_PORT")
+
+	p, _ = NewChannelPool(10, 20000, func() (net.Conn, error) { return net.Dial("tcp", "app:8020") })
 
 	if envPort != "" {
 		PORT = envPort

@@ -10,7 +10,33 @@ import (
 	protocols "github.com/SiddeshSambasivam/shillings/pkg/protocols"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
 	"github.com/dgrijalva/jwt-go"
+	"google.golang.org/protobuf/proto"
 )
+
+func readCommand(conn net.Conn, requestPb *pb.RequestCommand) error {
+
+	dataBuffer, readErr := protocols.ReadProtocolData(conn)
+	if readErr != nil {
+		sendCmdErrResponse(
+			conn,
+			pb.Code_DATA_LOSS,
+			"Error reading header: "+readErr.Error(),
+		)
+		return readErr
+	}
+
+	err := proto.Unmarshal(dataBuffer, requestPb)
+	if err != nil {
+		sendCmdErrResponse(
+			conn,
+			pb.Code_DATA_LOSS,
+			"Error unmarshalling: "+err.Error(),
+		)
+		return err
+	}
+
+	return nil
+}
 
 func sendCmdErrResponse(conn net.Conn, status_code pb.Code, err_message string) {
 	response := &pb.ResponseCommand{

@@ -8,13 +8,16 @@ import (
 	"github.com/SiddeshSambasivam/shillings/pkg/db"
 	envtools "github.com/SiddeshSambasivam/shillings/pkg/env"
 	errors "github.com/SiddeshSambasivam/shillings/pkg/errors"
+	redisCache "github.com/SiddeshSambasivam/shillings/pkg/redis"
 	"github.com/SiddeshSambasivam/shillings/proto/shillings/pb"
+	"github.com/go-redis/redis/v8"
 )
 
 var jwtKey []byte
 
 type DataEnv struct {
-	DB *sql.DB
+	DB    *sql.DB
+	Redis *redis.Client
 }
 
 func (env *DataEnv) handleConnection(conn net.Conn) {
@@ -89,7 +92,8 @@ func main() {
 	defer listener.Close()
 
 	db := db.InitDB()
-	env := &DataEnv{DB: db}
+	redis := redisCache.InitRedis()
+	env := &DataEnv{DB: db, Redis: redis}
 
 	for {
 		conn, err := listener.Accept()

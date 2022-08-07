@@ -48,12 +48,27 @@ services:
       - DBUSER=admin
       - DBPASS=admin
       - JWT_KEY=thisisastrongkey
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=setsomerandompass
     ports:
       - '8020:8020'
     depends_on:
       - db
+      - redis
     volumes:
       - .:/go/src/cTCP
+
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    networks:
+      - default
+    ports:
+      - '6379:6379'
+    command: redis-server --loglevel warning
+    volumes:
+      - cache:/data
 
   nginx:
     image: nginx:latest
@@ -67,4 +82,6 @@ services:
 networks:
   default:
 volumes:
+  cache:
+    driver: local
   mysql_data:

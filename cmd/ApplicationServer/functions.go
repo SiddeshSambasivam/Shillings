@@ -143,18 +143,26 @@ func (env *DataEnv) GetUser(req *pb.RequestGetUser) (protoreflect.ProtoMessage, 
 		return nil, errors.New("user not authenticated")
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
 
-	var user models.User
-	fetchCredQuery := "SELECT * from users where user_id = ?"
-	err = env.DB.QueryRowContext(
-		ctx,
-		fetchCredQuery, claims.User_id,
-	).Scan(&user.User_id, &user.First_name, &user.Middle_name, &user.Last_name, &user.Email, &user.Phone, &user.Balance, &user.Created_at, &user.Updated_at)
-	if err != nil {
-		log.Println("Error fetching user", err)
-		return nil, err
+	user, err := env.GetUserProfCache(ctx, claims)
+	if err != nil || user.User_id == 0 {
+
+		fetchCredQuery := "SELECT * from users where user_id = ?"
+		err = env.DB.QueryRowContext(
+			ctx,
+			fetchCredQuery, claims.User_id,
+		).Scan(&user.User_id, &user.First_name, &user.Middle_name, &user.Last_name, &user.Email, &user.Phone, &user.Balance, &user.Created_at, &user.Updated_at)
+		if err != nil {
+			log.Println("Error fetching user", err)
+			return nil, err
+		}
+
+		err := env.SetUserProfCache(ctx, user, claims)
+		if err != nil {
+			log.Println("Error setting user profile cache", err)
+		}
 	}
 
 	u := &pb.User{
