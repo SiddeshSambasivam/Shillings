@@ -47,6 +47,8 @@ The web layer was separated from the application layer so that they could be sca
 
 **Available API Endpoints**
 
+📥 Import the postman collection using `https://www.getpostman.com/collections/80407f7a54bcb47a552c`
+
 <details>
 <summary>POST /v1/login</summary>
 
