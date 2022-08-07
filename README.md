@@ -13,13 +13,10 @@ This project aims to create a backend system that mocks payment services. It pro
 
 The web layer was separated from the application layer so that they could be scaled independently. The application layer handles all the business logic; on the other hand, the web layer handles all the user requests. Both layers communicate with each other using a custom communication protocol.
 
-{% note %}
 **Techstack**
 
--   Programming Language: `Golang`.
--   Development: `MySQL`, `Redis`, `Protobuf`, `Nginx`, `Docker`.
-
-{% endnote %}
+-   _ Programming Language:_ `Golang`.
+-   _Development:_ `MySQL`, `Redis`, `Protobuf`, `Nginx`, `Docker`.
 
 ### **B. System components**
 
