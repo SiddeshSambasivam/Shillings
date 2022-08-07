@@ -111,7 +111,7 @@ Response:
 ```json
 {
     "user": {
-        "id": " <id>",
+        "user_id": " <user_id>",
         "first_name": " <first_name>",
         "middle_name": " <middle_name>",
         "last_name": " <last_name>",
@@ -189,7 +189,7 @@ Response:
 {
     "transactions": [
         {
-            "id": " <id>",
+            "transaction_id": " <transaction_id>",
             "sender_email": " <sender_email>",
             "receiver_email": " <receiver_email>",
             "amount": " <amount>",
@@ -211,11 +211,11 @@ Response:
 
 **Tables**: `users`, `transactions`, `credentials`
 
-| Table        | Columns                                                                               |
-| ------------ | ------------------------------------------------------------------------------------- |
-| users        | id, first_name, middle_name, last_name, email, phone, balance, created_at, updated_at |
-| transactions | id, sender_id, sender_email, receiver_id, receiver_email, amount, created_at          |
-| credentials  | id, user_id, password, updated_at, last_login                                         |
+| Table        | Columns                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| users        | user_id, first_name, middle_name, last_name, email, phone, balance, created_at, updated_at |
+| transactions | transaction_id, sender_id, sender_email, receiver_id, receiver_email, amount, created_at   |
+| credentials  | credential_id, user_id, email, password, updated_at, last_login                            |
 
 **Stack:** `MySQL`, `Redis`
 
