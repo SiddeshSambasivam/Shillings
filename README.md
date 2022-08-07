@@ -52,7 +52,7 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 #### **Tasks**
 
 -   [x] Setup SQL database locally (docker)
--   [ ] Setup redis locally (docker)
+-   [x] Setup redis locally (docker)
 -   [x] Populate the database with some data
 
 ### 2. Web Layer
@@ -248,8 +248,8 @@ Response:
 -   [x] Write the handlers for each command
 -   [x] Setup database handlers
     -   [x] Write connection pool for the database
--   [ ] Setup redis handlers
-    -   [ ] Write connection pool for the redis database
+-   [x] Setup redis handlers
+    -   [x] Write connection pool for the redis database
 -   [ ] Add health check for platform server.
 
 ## Performance requirements:
