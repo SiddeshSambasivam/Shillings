@@ -63,7 +63,7 @@ In addition, `redis` is used to cache the user data and authentication tokens.
 | `/v1/signup`       | `POST` | Register a new user                        |
 | `/v1/account`      | `GET`  | Gets a user profile                        |
 | `/v1/pay`          | `POST` | Makes a payment to another user            |
-| `/v1/topup`        | `PUT`  | Tops up a user's account balance           |
+| `/v1/topup`        | `POST` | Tops up a user's account balance           |
 | `/v1/transactions` | `GET`  | Get all the transactions made by a user    |
 
 #### **API Endpoints**
@@ -125,18 +125,6 @@ Response:
 <details>
 <summary>GET /v1/account</summary>
 
-Request body:
-
-```json
-{
-    "user_id": " <user_id>",
-    "auth": {
-        "token": " <token>",
-        "expiration_time": " <expiration_time>"
-    }
-}
-```
-
 Response:
 
 ```json
@@ -148,7 +136,9 @@ Response:
         "last_name": " <last_name>",
         "email": " <email>",
         "phone": " <phone>",
-        "balance": " <balance>"
+        "balance": " <balance>",
+        "created_at": " <created_at>",
+        "updated_at": " <updated_at>"
     },
     "status": {
         "code": " <code>",
@@ -166,7 +156,7 @@ Request body:
 
 ```json
 {
-    "receiver_email": "<receiver_id>",
+    "receiver_email": "<receiver_email>",
     "amount": " <amount>"
 }
 ```
@@ -186,13 +176,12 @@ Response:
 </details>
 
 <details>
-<summary>PUT /v1/topup</summary>
+<summary>POST /v1/topup</summary>
 
 Request body:
 
 ```json
 {
-    "user_id": " <user_id>",
     "amount": " <amount>"
 }
 ```
@@ -213,14 +202,6 @@ Response:
 <details>
 <summary>GET /v1/transactions</summary>
 
-Request body:
-
-```json
-{
-    "user_id": " <user_id>"
-}
-```
-
 Response:
 
 ```json
@@ -228,8 +209,8 @@ Response:
     "transactions": [
         {
             "id": " <id>",
-            "sender_name": " <sender_name>",
-            "receiver_name": " <receiver_name>",
+            "sender_email": " <sender_email>",
+            "receiver_email": " <receiver_email>",
             "amount": " <amount>",
             "created_at": " <created_at>"
         }
