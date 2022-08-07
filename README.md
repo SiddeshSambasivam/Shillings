@@ -15,7 +15,7 @@ The web layer was separated from the application layer so that they could be sca
 
 **Techstack**
 
--   _ Programming Language:_ `Golang`.
+-   _Programming Language:_ `Golang`.
 -   _Development:_ `MySQL`, `Redis`, `Protobuf`, `Nginx`, `Docker`.
 
 ### **B. System components**
