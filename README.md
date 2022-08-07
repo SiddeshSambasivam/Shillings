@@ -1,19 +1,39 @@
-# Shillings
+<h2>
+    <b>Shillings</b>
+</h2>
 
-_A backend system for a payment service that allows you to send and receive money._
+### **A. Overview**
+
+This project aims to create a backend system that mocks payment services. It provides a suite of APIs that can be used for user authentication, payment, and other services.
 
 <p align="center">
     <img src="assets/overview.png" />
     <p align="center">Fig 1. <i>An overview of the backend system</i></p>
 </p>
 
-### Project Scope
+The web layer was separated from the application layer so that they could be scaled independently. The application layer handles all the business logic; on the other hand, the web layer handles all the user requests. Both layers communicate with each other using a custom communication protocol.
 
-A set of web APIs that provide **payment services** with authentication. A _custom communication protocol (shillings)_ is used by the web and platform layer. The `platform layer` (application layer) handles all the business logic and the `web layer` handles the client calls. _Shillings_ is a custom protocol on top of TCP written in `Go` to handle platform level services such as authentication, payment, database access, and so on. The web layer is seperated from the platform layer to allow easy scaling and maintenance.
+{% note %}
+**Techstack**
 
-## Installation
+-   Programming Language: `Golang`.
+-   Development: `MySQL`, `Redis`, `Protobuf`, `Nginx`, `Docker`.
 
-**Prerequisites:** Docker
+{% endnote %}
+
+### **B. System components**
+
+| Component            | Description                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `Web server`         | handles clients' http requests                                                     |
+| `Application server` | handling all the business logic such as authentication, payment and user accounts. |
+| `MySQL Database`     | Stores the user profile, credentials and transactions                              |
+| `Redis`              | Stores the cached user profile                                                     |
+| `Nginx`              | Used as a load balancer for the web server.                                        |
+
+### **C. Installation**
+
+**Prerequisites:** [Install Docker](https://docs.docker.com/get-docker/)
 
 1. Build the required images
 
@@ -23,50 +43,12 @@ A set of web APIs that provide **payment services** with authentication. A _cust
 
 2. Start the services
     ```bash
-    make start
+    make prod
     ```
 
-## Interesting Situations
+### **D. Usage**
 
--   `Application server cannot connect to the MySQL database`
-    -   It was caused by the difference in startup time between the application server and the database server.
-    -   By the time database starts, the application server is already running and has pinged the database server.
-    -   **Solution:** To solve it I used `wait-for` package to listen to SQL server until it is ready and then start the application server.
-
-## Technical Design Decisions
-
-### 1. Database
-
-**Tables**: `users`, `transactions`, `credentials`
-
-| Table        | Columns                                                                               |
-| ------------ | ------------------------------------------------------------------------------------- |
-| users        | id, first_name, middle_name, last_name, email, phone, balance, created_at, updated_at |
-| transactions | id, sender_id, receiver_id, amount, created_at                                        |
-| credentials  | id, user_id, password, salt, updated_at, last_login                                   |
-
-**Stack:** SQL
-
-In addition, `redis` is used to cache the user data and authentication tokens.
-
-#### **Tasks**
-
--   [x] Setup SQL database locally (docker)
--   [x] Setup redis locally (docker)
--   [x] Populate the database with some data
-
-### 2. Web Layer
-
-| API                | Method | Description                                |
-| ------------------ | ------ | ------------------------------------------ |
-| `/v1/login`        | `POST` | Authenticates the user and returns a token |
-| `/v1/signup`       | `POST` | Register a new user                        |
-| `/v1/account`      | `GET`  | Gets a user profile                        |
-| `/v1/pay`          | `POST` | Makes a payment to another user            |
-| `/v1/topup`        | `POST` | Tops up a user's account balance           |
-| `/v1/transactions` | `GET`  | Get all the transactions made by a user    |
-
-#### **API Endpoints**
+**Available API Endpoints**
 
 <details>
 <summary>POST /v1/login</summary>
@@ -81,6 +63,8 @@ Request body:
 ```
 
 Response:
+
+The `JWT token` is stored as a cookie in the response.
 
 ```json
 {
@@ -224,12 +208,40 @@ Response:
 
 </details>
 
-#### **Tasks**
+### **E. Technical details**
 
--   [x] write the API handlers
--   [x] Write the utility functions to handle protobuf, read and write requests with platform layer
+#### **1. Database**
 
-### 3. Platform Layer
+**Tables**: `users`, `transactions`, `credentials`
+
+| Table        | Columns                                                                               |
+| ------------ | ------------------------------------------------------------------------------------- |
+| users        | id, first_name, middle_name, last_name, email, phone, balance, created_at, updated_at |
+| transactions | id, sender_id, sender_email, receiver_id, receiver_email, amount, created_at          |
+| credentials  | id, user_id, password, updated_at, last_login                                         |
+
+**Stack:** `MySQL`, `Redis`
+
+-   `Redis` is used to cache the user data of authenticated tokens.
+
+#### **2. Web Layer**
+
+| API                | Method | Description                                |
+| ------------------ | ------ | ------------------------------------------ |
+| `/v1/login`        | `POST` | Authenticates the user and returns a token |
+| `/v1/signup`       | `POST` | Register a new user                        |
+| `/v1/account`      | `GET`  | Gets a user profile                        |
+| `/v1/pay`          | `POST` | Makes a payment to another user            |
+| `/v1/topup`        | `POST` | Tops up a user's account balance           |
+| `/v1/transactions` | `GET`  | Get all the transactions made by a user    |
+
+**Stack:** `Golang`, `Nginx`
+
+#### **3. Application Layer**
+
+#### **3a. Custom communication protocol**
+
+The following table list of commands supported by the protocol.
 
 | Command | Value | Function                                   |
 | ------- | ----- | ------------------------------------------ |
@@ -240,19 +252,25 @@ Response:
 | `TPU`   | 4     | Top up a user's balance                    |
 | `TXQ`   | 5     | Get all the transactions made by a user    |
 
-#### **Tasks**
+The data is encoded in the following way:
 
--   [x] Write the required protobuf messages for the communication protocol
-    -   [x] Compile the protobuf messages with `protoc`
--   [x] Write the communication protocol
--   [x] Write the handlers for each command
--   [x] Setup database handlers
-    -   [x] Write connection pool for the database
--   [x] Setup redis handlers
-    -   [x] Write connection pool for the redis database
--   [ ] Add health check for platform server.
+-   The header is of size 4 bytes; This encodes the length of the payload.
 
-## Performance requirements:
+    -   The payload is of size `<length>` bytes; This encodes the command and the data.
 
--   [ ] Backend service should be able to handle a minimum of 10K qps
-    -   Load test the backend service with `wrk`
+-   Allocate a buffer of size `<length>` bytes and read the data into it.
+
+Furthermore, `protocol buffers` were used to serialize the data.
+
+**Stack:** `Golang`, `Protobuf`
+
+### **F. Interesting Situations**
+
+-   `Application server cannot connect to the MySQL database`
+    -   It was caused by the difference in startup time between the application server and the database server.
+    -   By the time database starts, the application server is already running and has pinged the database server.
+    -   **Solution:** To solve it I used `wait-for` package to listen to SQL server until it is ready and then start the application server.
+-   `Redis set key issue`
+    -   _Problem:_ Although the redis key is set, it was not found in later calls.
+    -   I later realised that the `ttl` for the key was set to `1 second`; This was because, ttl is set based on the expiry time of the jwt token, however, the `time.Duration(ExpiryTime)` was not being converted corrently.
+    -   _Solution:_ I converted the `ExpiryTime` from `int64` to time stamp and later used `time.Until(TimeStamp)` to set the `ttl` and
